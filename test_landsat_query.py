@@ -118,7 +118,7 @@ def test_cli_help():
     for script in scripts:
         try:
             result = subprocess.run(
-                ['python3', script, '--help'],
+                [sys.executable, script, '--help'],
                 capture_output=True,
                 text=True,
                 timeout=5

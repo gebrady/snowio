@@ -59,7 +59,8 @@ class LandsatM2MAPI:
             payload = {"apiKey": self.api_key}
             try:
                 self.session.post(url, json=payload)
-            except:
+            except Exception:
+                # Ignore errors during logout
                 pass
             self.api_key = None
     
@@ -339,9 +340,9 @@ class LandsatSceneQueryM2M:
                     # Resample to reasonable size
                     max_size = (1024, 1024)
                     # Use LANCZOS for backward compatibility with older Pillow versions
-                    try:
+                    if hasattr(Image, 'Resampling'):
                         img.thumbnail(max_size, Image.Resampling.LANCZOS)
-                    except AttributeError:
+                    else:
                         img.thumbnail(max_size, Image.LANCZOS)
                     
                     # Save as JPEG
