@@ -65,17 +65,17 @@ def test_metadata_enhancement():
     
     query = LandsatSceneQuery()
     
-    # Test analysis-ready check
-    mock_scene = {'dataset_name': 'landsat_ot_c2_l2'}
-    ar_data = query._check_analysis_ready(mock_scene)
+    # Test analysis-ready check (M2M implementation takes dataset string)
+    dataset = 'landsat_ot_c2_l2'
+    ar_data = query._check_analysis_ready(dataset)
     
     if ar_data.get('is_collection2') and ar_data.get('is_level2'):
         print("  ✓ Analysis-ready data detection works")
     else:
         print("  ✗ Analysis-ready data detection failed")
     
-    # Test multispectral info
-    ms_info = query._get_multispectral_info(mock_scene)
+    # Test multispectral info (M2M implementation takes dataset string)
+    ms_info = query._get_multispectral_info(dataset)
     
     if isinstance(ms_info.get('bands'), dict) and len(ms_info['bands']) > 0:
         print(f"  ✓ Multispectral info works ({len(ms_info['bands'])} bands)")
@@ -89,19 +89,19 @@ def test_class_initialization():
     """Test class initialization."""
     print("Testing class initialization...")
     
-    # Test landsatxplore-based class
+    # Test primary M2M-based class
     try:
         from landsat_query import LandsatSceneQuery
         query = LandsatSceneQuery()
-        print("  ✓ LandsatSceneQuery initialized")
+        print("  ✓ LandsatSceneQuery (M2M) initialized")
     except Exception as e:
         print(f"  ✗ LandsatSceneQuery initialization failed: {e}")
     
-    # Test M2M-based class
+    # Test alternative M2M class (backward compatibility)
     try:
         from landsat_query_m2m import LandsatSceneQueryM2M
         query_m2m = LandsatSceneQueryM2M()
-        print("  ✓ LandsatSceneQueryM2M initialized")
+        print("  ✓ LandsatSceneQueryM2M (legacy) initialized")
     except Exception as e:
         print(f"  ✗ LandsatSceneQueryM2M initialization failed: {e}")
     

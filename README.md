@@ -22,23 +22,19 @@ cd snowio
 pip install -r requirements.txt
 ```
 
-3. (Optional) Install landsatxplore for enhanced functionality:
-```bash
-pip install landsatxplore
-```
-
-4. Register for USGS EarthExplorer credentials (required for API access):
+3. Register for USGS EarthExplorer credentials (required for API access):
    - Visit: https://ers.cr.usgs.gov/register/
    - Create a free account
 
 ## Available Scripts
 
-The repository includes two implementations:
+The repository includes multiple implementations:
 
-1. **`landsat_query.py`** - Uses the landsatxplore library (requires separate installation)
-2. **`landsat_query_m2m.py`** - Direct M2M API implementation (credentials required, no extra dependencies)
+1. **`landsat_query.py`** - **Primary implementation** using direct M2M REST API (credentials required, minimal dependencies)
+2. **`landsat_query_m2m.py`** - Alternative M2M implementation (same as primary, kept for backward compatibility)
+3. **`landsat_query_landsatxplore.py`** - Legacy implementation using landsatxplore library (may have endpoint issues)
 
-Both scripts provide the same functionality. Use `landsat_query_m2m.py` if you have issues installing landsatxplore.
+**Recommended:** Use `landsat_query.py` for the most reliable experience.
 
 ## Usage
 
@@ -253,5 +249,6 @@ This project is provided as-is for research and educational purposes.
 
 ## Credits
 
-- Uses the [landsatxplore](https://github.com/yannforget/landsatxplore) library for USGS API access
+- Uses the USGS Machine-to-Machine (M2M) REST API for direct access
+- Optional [landsatxplore](https://github.com/yannforget/landsatxplore) library support for legacy implementation
 - Data provided by the U.S. Geological Survey
