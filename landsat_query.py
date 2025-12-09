@@ -240,7 +240,11 @@ class LandsatSceneQuery:
                         
                         # Resample to reasonable size
                         max_size = (1024, 1024)
-                        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                        # Use LANCZOS for backward compatibility with older Pillow versions
+                        try:
+                            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                        except AttributeError:
+                            img.thumbnail(max_size, Image.LANCZOS)
                         
                         # Save as JPEG
                         img.convert('RGB').save(preview_path, 'JPEG', quality=85)
