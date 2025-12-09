@@ -1,0 +1,8 @@
+# Core dependencies
+numpy>=1.21.0
+pillow>=9.0.0
+requests>=2.27.0
+
+# Optional dependencies for enhanced functionality
+# landsatxplore>=0.14.0  # For USGS API access (install separately if needed)
+# shapely>=1.8.0  # For advanced geospatial operations (install separately if needed)
