@@ -213,6 +213,26 @@ class TestClassification(unittest.TestCase):
         
         expected = np.array([[1, 0, 1]], dtype=np.uint8)
         np.testing.assert_array_equal(classification, expected)
+    
+    def test_threshold_validation(self):
+        """Test that ice threshold must be greater than snow threshold."""
+        ndsi = np.array([[0.5, 0.3, 0.6]], dtype=np.float32)
+        
+        # Ice threshold equal to snow threshold should raise ValueError
+        with self.assertRaises(ValueError):
+            classify_snow_glacier(
+                ndsi,
+                ndsi_snow_threshold=0.5,
+                ndsi_ice_threshold=0.5
+            )
+        
+        # Ice threshold less than snow threshold should raise ValueError
+        with self.assertRaises(ValueError):
+            classify_snow_glacier(
+                ndsi,
+                ndsi_snow_threshold=0.6,
+                ndsi_ice_threshold=0.4
+            )
 
 
 if __name__ == '__main__':

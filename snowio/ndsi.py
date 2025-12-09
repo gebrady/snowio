@@ -298,11 +298,21 @@ def classify_snow_glacier(
         
     Returns:
         Classification array with values 0, 1, or 2 (2 only if ndsi_ice_threshold is provided)
+        
+    Raises:
+        ValueError: If ndsi_ice_threshold is provided and is less than or equal to ndsi_snow_threshold
     """
     classification = np.zeros(ndsi.shape, dtype=np.uint8)
     
     # Handle backward compatibility: use new parameter names if provided, otherwise fall back to old
     snow_thresh = ndsi_snow_threshold if ndsi_snow_threshold is not None else ndsi_threshold
+    
+    # Validate thresholds if both are provided
+    if ndsi_ice_threshold is not None and ndsi_ice_threshold <= snow_thresh:
+        raise ValueError(
+            f"ndsi_ice_threshold ({ndsi_ice_threshold}) must be greater than "
+            f"ndsi_snow_threshold ({snow_thresh})"
+        )
     
     # Identify snow (NDSI >= snow threshold)
     snow_mask = (ndsi >= snow_thresh) & (~np.isnan(ndsi))
@@ -316,7 +326,12 @@ def classify_snow_glacier(
         classification[ice_mask] = 2
     # For backward compatibility: if glacier mask provided but no ice threshold, use the mask
     elif glacier_mask is not None:
-        glacier_snow_mask = snow_mask & (glacier_mask.astype(bool))
+        # Convert glacier mask to boolean, handling both bool and numeric arrays
+        if glacier_mask.dtype == bool:
+            glacier_bool = glacier_mask
+        else:
+            glacier_bool = glacier_mask > 0
+        glacier_snow_mask = snow_mask & glacier_bool
         classification[glacier_snow_mask] = 2
     
     return classification

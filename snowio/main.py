@@ -163,11 +163,15 @@ def main():
     if aoi_geometry:
         print(f"Using AOI: {aoi_geometry.bounds}")
     
-    # Load glacier mask
+    # Handle deprecated glacier mask parameter
     glacier_mask = None
     if args.glacier_mask:
+        print(f"WARNING: --glacier-mask is deprecated. Use --ndsi-ice-threshold instead.")
         print(f"Loading glacier mask from {args.glacier_mask}")
-        # Glacier mask loading will be done per-scene to match dimensions
+        # Note: Glacier mask would need to be loaded with matching dimensions per scene
+        # For simplicity, we load it once here and assume it matches the scene dimensions
+        # In production, you may want to handle reprojection/resampling
+        glacier_mask = load_glacier_mask(args.glacier_mask, reference_shape=None)
     
     # Handle threshold parameters
     ndsi_snow_thresh = args.ndsi_snow_threshold if args.ndsi_snow_threshold is not None else args.ndsi_threshold
