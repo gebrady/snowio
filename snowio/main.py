@@ -125,7 +125,7 @@ def main():
     
     parser.add_argument(
         '--glacier-mask',
-        help='Path to glacier mask raster file',
+        help='Path to glacier mask raster file (deprecated, use --ndsi-ice-threshold instead)',
         default=None
     )
     
@@ -133,7 +133,21 @@ def main():
         '--ndsi-threshold',
         type=float,
         default=0.4,
-        help='NDSI threshold for snow classification (default: 0.4)'
+        help='NDSI threshold for snow classification (default: 0.4, deprecated in favor of --ndsi-snow-threshold)'
+    )
+    
+    parser.add_argument(
+        '--ndsi-snow-threshold',
+        type=float,
+        default=None,
+        help='NDSI threshold for snow classification (overrides --ndsi-threshold if provided)'
+    )
+    
+    parser.add_argument(
+        '--ndsi-ice-threshold',
+        type=float,
+        default=None,
+        help='NDSI threshold for glacier/ice classification (if provided, enables glacier class output)'
     )
     
     parser.add_argument(
@@ -154,6 +168,18 @@ def main():
     if args.glacier_mask:
         print(f"Loading glacier mask from {args.glacier_mask}")
         # Glacier mask loading will be done per-scene to match dimensions
+    
+    # Handle threshold parameters
+    ndsi_snow_thresh = args.ndsi_snow_threshold if args.ndsi_snow_threshold is not None else args.ndsi_threshold
+    ndsi_ice_thresh = args.ndsi_ice_threshold
+    
+    # Print threshold information
+    print(f"Using snow threshold: {ndsi_snow_thresh}")
+    if ndsi_ice_thresh is not None:
+        print(f"Using ice/glacier threshold: {ndsi_ice_thresh}")
+        print("Glacier classification enabled (3-class output)")
+    else:
+        print("Glacier classification disabled (2-class output)")
     
     # Determine scenes to process
     if args.batch:
@@ -177,7 +203,9 @@ def main():
                 output_dir=args.output,
                 aoi_geometry=aoi_geometry,
                 glacier_mask=glacier_mask,
-                ndsi_threshold=args.ndsi_threshold
+                ndsi_threshold=args.ndsi_threshold,
+                ndsi_snow_threshold=args.ndsi_snow_threshold,
+                ndsi_ice_threshold=args.ndsi_ice_threshold
             )
             print(f"✓ Successfully processed scene")
             print(f"  Output: {output_path}")

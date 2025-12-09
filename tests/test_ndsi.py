@@ -158,6 +158,61 @@ class TestClassification(unittest.TestCase):
                            [0, 1, 0]], dtype=np.uint8)
         
         np.testing.assert_array_equal(classification, expected)
+    
+    def test_classify_with_separate_thresholds(self):
+        """Test classification with separate snow and ice thresholds."""
+        ndsi = np.array([[0.5, 0.3, 0.6],
+                        [0.2, 0.7, 0.1],
+                        [0.8, 0.35, 0.9]], dtype=np.float32)
+        
+        # Snow threshold: 0.4, Ice threshold: 0.7
+        classification = classify_snow_glacier(
+            ndsi, 
+            glacier_mask=None,
+            ndsi_snow_threshold=0.4,
+            ndsi_ice_threshold=0.7
+        )
+        
+        # Pixels with NDSI >= 0.7 should be class 2 (ice)
+        # Pixels with 0.4 <= NDSI < 0.7 should be class 1 (snow)
+        # Pixels with NDSI < 0.4 should be class 0 (unclassified)
+        expected = np.array([[1, 0, 1],
+                           [0, 2, 0],
+                           [2, 0, 2]], dtype=np.uint8)
+        
+        np.testing.assert_array_equal(classification, expected)
+    
+    def test_classify_snow_only_with_new_parameter(self):
+        """Test classification with only snow threshold (no glacier class)."""
+        ndsi = np.array([[0.5, 0.3, 0.6],
+                        [0.2, 0.7, 0.1],
+                        [0.8, 0.35, 0.9]], dtype=np.float32)
+        
+        # Only snow threshold provided, no ice threshold
+        classification = classify_snow_glacier(
+            ndsi, 
+            ndsi_snow_threshold=0.4,
+            ndsi_ice_threshold=None
+        )
+        
+        # Only classes 0 and 1 should be present (no class 2)
+        expected = np.array([[1, 0, 1],
+                           [0, 1, 0],
+                           [1, 0, 1]], dtype=np.uint8)
+        
+        np.testing.assert_array_equal(classification, expected)
+        # Verify no glacier class (2) is present
+        self.assertNotIn(2, classification)
+    
+    def test_backward_compatibility_with_ndsi_threshold(self):
+        """Test backward compatibility using old ndsi_threshold parameter."""
+        ndsi = np.array([[0.5, 0.3, 0.6]], dtype=np.float32)
+        
+        # Using old parameter name
+        classification = classify_snow_glacier(ndsi, ndsi_threshold=0.4)
+        
+        expected = np.array([[1, 0, 1]], dtype=np.uint8)
+        np.testing.assert_array_equal(classification, expected)
 
 
 if __name__ == '__main__':

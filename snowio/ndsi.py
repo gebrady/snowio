@@ -152,7 +152,9 @@ def process_scene(
     output_dir: str,
     aoi_geometry: Optional[object] = None,
     glacier_mask: Optional[np.ndarray] = None,
-    ndsi_threshold: float = 0.4
+    ndsi_threshold: float = 0.4,
+    ndsi_snow_threshold: Optional[float] = None,
+    ndsi_ice_threshold: Optional[float] = None
 ) -> str:
     """
     Process a Landsat scene to generate NDSI and snow/glacier classification.
@@ -161,8 +163,10 @@ def process_scene(
         scene_path: Path to Landsat scene directory
         output_dir: Output directory for processed layers
         aoi_geometry: Optional shapely geometry for AOI cropping
-        glacier_mask: Optional binary mask indicating glacier locations
-        ndsi_threshold: NDSI threshold for snow classification (default: 0.4)
+        glacier_mask: Optional binary mask indicating glacier locations (deprecated, use thresholds)
+        ndsi_threshold: NDSI threshold for snow classification (default: 0.4, deprecated)
+        ndsi_snow_threshold: NDSI threshold for snow classification (if None, uses ndsi_threshold)
+        ndsi_ice_threshold: NDSI threshold for glacier/ice classification (if None, no glacier class)
         
     Returns:
         Path to output NDSI file
@@ -208,8 +212,14 @@ def process_scene(
     with rasterio.open(ndsi_output, 'w', **profile) as dst:
         dst.write(ndsi, 1)
     
-    # Generate classification (0: unclassified, 1: snow, 2: glacier)
-    classification = classify_snow_glacier(ndsi, glacier_mask, ndsi_threshold)
+    # Generate classification (0: unclassified, 1: snow, 2: glacier if ice threshold provided)
+    classification = classify_snow_glacier(
+        ndsi, 
+        glacier_mask, 
+        ndsi_threshold,
+        ndsi_snow_threshold,
+        ndsi_ice_threshold
+    )
     
     # Write classification to file
     classification_output = os.path.join(output_dir, f"{scene_name}_classification.tif")
@@ -267,34 +277,45 @@ def crop_to_aoi(
 def classify_snow_glacier(
     ndsi: np.ndarray,
     glacier_mask: Optional[np.ndarray] = None,
-    ndsi_threshold: float = 0.4
+    ndsi_threshold: float = 0.4,
+    ndsi_snow_threshold: Optional[float] = None,
+    ndsi_ice_threshold: Optional[float] = None
 ) -> np.ndarray:
     """
     Classify pixels into snow, glacier, or unclassified.
     
     Classification:
     - 0: Unclassified (NDSI below threshold or invalid)
-    - 1: Snow (NDSI above threshold, not in glacier area)
-    - 2: Glacier (NDSI above threshold, in glaciated area)
+    - 1: Snow (NDSI above snow threshold)
+    - 2: Glacier/Ice (NDSI above ice threshold, only when ice threshold is provided)
     
     Args:
         ndsi: NDSI array
-        glacier_mask: Optional binary mask where True/1 indicates glacier
-        ndsi_threshold: NDSI threshold for snow/glacier classification
+        glacier_mask: Optional binary mask where True/1 indicates glacier (deprecated, use thresholds instead)
+        ndsi_threshold: NDSI threshold for snow/glacier classification (deprecated, use ndsi_snow_threshold)
+        ndsi_snow_threshold: NDSI threshold for snow classification (if None, uses ndsi_threshold)
+        ndsi_ice_threshold: NDSI threshold for glacier/ice classification (if None, glacier class is not generated)
         
     Returns:
-        Classification array with values 0, 1, or 2
+        Classification array with values 0, 1, or 2 (2 only if ndsi_ice_threshold is provided)
     """
     classification = np.zeros(ndsi.shape, dtype=np.uint8)
     
-    # Identify snow (NDSI >= threshold)
-    snow_mask = (ndsi >= ndsi_threshold) & (~np.isnan(ndsi))
+    # Handle backward compatibility: use new parameter names if provided, otherwise fall back to old
+    snow_thresh = ndsi_snow_threshold if ndsi_snow_threshold is not None else ndsi_threshold
+    
+    # Identify snow (NDSI >= snow threshold)
+    snow_mask = (ndsi >= snow_thresh) & (~np.isnan(ndsi))
     
     # All snow pixels start as class 1
     classification[snow_mask] = 1
     
-    # If glacier mask provided, upgrade snow pixels in glacier areas to class 2
-    if glacier_mask is not None:
+    # If ice threshold is provided, classify high NDSI pixels as glacier (class 2)
+    if ndsi_ice_threshold is not None:
+        ice_mask = (ndsi >= ndsi_ice_threshold) & (~np.isnan(ndsi))
+        classification[ice_mask] = 2
+    # For backward compatibility: if glacier mask provided but no ice threshold, use the mask
+    elif glacier_mask is not None:
         glacier_snow_mask = snow_mask & (glacier_mask.astype(bool))
         classification[glacier_snow_mask] = 2
     

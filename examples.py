@@ -8,7 +8,7 @@ import os
 
 
 def example_single_scene():
-    """Example: Process a single Landsat scene."""
+    """Example: Process a single Landsat scene with 2-class output."""
     
     # Define paths
     scene_path = "data/LC08_L1TP_043034_20201215_20201226_01_T1"
@@ -18,22 +18,20 @@ def example_single_scene():
     # Example: Sierra Nevada region
     aoi = box(-120.5, 38.5, -120.0, 39.0)
     
-    # Process the scene
-    print("Processing Landsat scene...")
+    # Process the scene (2-class output: 0=unclassified, 1=snow)
+    print("Processing Landsat scene (2-class output)...")
     output_path = process_scene(
         scene_path=scene_path,
         output_dir=output_dir,
         aoi_geometry=aoi,
-        ndsi_threshold=0.4
+        ndsi_snow_threshold=0.4
     )
     
     print(f"Output saved to: {output_path}")
 
 
-def example_with_glacier_mask():
-    """Example: Process scene with glacier mask."""
-    
-    import numpy as np
+def example_with_glacier_classification():
+    """Example: Process scene with glacier classification enabled (3-class output)."""
     
     scene_path = "data/LC08_L1TP_043034_20201215_20201226_01_T1"
     output_dir = "output/with_glacier"
@@ -41,20 +39,19 @@ def example_with_glacier_mask():
     # Define AOI
     aoi = box(-120.5, 38.5, -120.0, 39.0)
     
-    # Create a dummy glacier mask (in real use, load from file)
-    # glacier_mask = np.zeros((1000, 1000), dtype=bool)
-    # glacier_mask[400:600, 400:600] = True  # Mark center region as glacier
-    
-    # Process scene
+    # Process scene with both snow and ice thresholds
+    # This enables 3-class output: 0=unclassified, 1=snow, 2=glacier/ice
+    print("Processing Landsat scene (3-class output with glacier)...")
     output_path = process_scene(
         scene_path=scene_path,
         output_dir=output_dir,
         aoi_geometry=aoi,
-        glacier_mask=None,  # Pass actual mask here
-        ndsi_threshold=0.4
+        ndsi_snow_threshold=0.4,  # Lower threshold for snow
+        ndsi_ice_threshold=0.7    # Higher threshold for glacier/ice
     )
     
     print(f"Output saved to: {output_path}")
+    print("Classification: 0=unclassified, 1=snow, 2=glacier/ice")
 
 
 def example_identify_version():
@@ -86,7 +83,7 @@ def example_batch_processing():
     # Define AOI
     aoi = box(-120.5, 38.5, -120.0, 39.0)
     
-    # Process each scene
+    # Process each scene with glacier classification enabled
     for scene_path in scene_paths:
         print(f"\nProcessing: {os.path.basename(scene_path)}")
         try:
@@ -94,7 +91,8 @@ def example_batch_processing():
                 scene_path=scene_path,
                 output_dir=output_dir,
                 aoi_geometry=aoi,
-                ndsi_threshold=0.4
+                ndsi_snow_threshold=0.4,
+                ndsi_ice_threshold=0.7  # Enable glacier classification
             )
             print(f"✓ Success: {output_path}")
         except Exception as e:
@@ -107,6 +105,6 @@ if __name__ == "__main__":
     
     # Run examples (uncomment as needed)
     # example_single_scene()
-    # example_with_glacier_mask()
+    # example_with_glacier_classification()
     example_identify_version()
     # example_batch_processing()
