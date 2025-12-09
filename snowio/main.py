@@ -168,14 +168,20 @@ def main():
     if args.glacier_mask:
         print(f"WARNING: --glacier-mask is deprecated. Use --ndsi-ice-threshold instead.")
         print(f"Loading glacier mask from {args.glacier_mask}")
-        # Note: Glacier mask would need to be loaded with matching dimensions per scene
-        # For simplicity, we load it once here and assume it matches the scene dimensions
-        # In production, you may want to handle reprojection/resampling
+        # Note: Loading glacier mask with proper dimension matching would require
+        # per-scene reprojection/resampling. Since this is deprecated, we keep it
+        # simple and load once, assuming it matches scene dimensions.
         glacier_mask = load_glacier_mask(args.glacier_mask, reference_shape=None)
     
     # Handle threshold parameters
     ndsi_snow_thresh = args.ndsi_snow_threshold if args.ndsi_snow_threshold is not None else args.ndsi_threshold
     ndsi_ice_thresh = args.ndsi_ice_threshold
+    
+    # Validate thresholds at CLI level for better error messages
+    if ndsi_ice_thresh is not None and ndsi_ice_thresh <= ndsi_snow_thresh:
+        print(f"ERROR: --ndsi-ice-threshold ({ndsi_ice_thresh}) must be greater than "
+              f"snow threshold ({ndsi_snow_thresh})")
+        sys.exit(1)
     
     # Print threshold information
     print(f"Using snow threshold: {ndsi_snow_thresh}")
