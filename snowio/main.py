@@ -44,8 +44,8 @@ def parse_aoi(aoi_str: Optional[str]):
     # Try to parse as WKT
     try:
         return wkt.loads(aoi_str)
-    except:
-        raise ValueError(f"Could not parse AOI: {aoi_str}")
+    except Exception as e:
+        raise ValueError(f"Could not parse AOI: {aoi_str}. Error: {e}")
 
 
 def load_glacier_mask(glacier_mask_path: Optional[str], reference_shape: tuple) -> Optional[np.ndarray]:
@@ -67,7 +67,10 @@ def load_glacier_mask(glacier_mask_path: Optional[str], reference_shape: tuple) 
     with rasterio.open(glacier_mask_path) as src:
         glacier_mask = src.read(1)
     
-    # TODO: Handle reprojection/resampling if shapes don't match
+    # Note: Current implementation assumes glacier mask has same projection and 
+    # resolution as input scene. For different projections/resolutions, 
+    # reprojection/resampling should be performed in the process_scene function
+    # using rasterio.warp.reproject() to match the scene's coordinate system.
     return glacier_mask
 
 
