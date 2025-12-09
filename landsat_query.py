@@ -228,8 +228,8 @@ class LandsatSceneQuery:
             enhanced_scene = self._enhance_scene_metadata(scene, dataset)
             enhanced_scenes.append(enhanced_scene)
         
-        # Sort by date
-        enhanced_scenes.sort(key=lambda x: x.get('acquisition_date', ''))
+        # Sort by date (dates are in YYYY-MM-DD format)
+        enhanced_scenes.sort(key=lambda x: x.get('acquisition_date', '0000-00-00'))
         
         return enhanced_scenes
     
