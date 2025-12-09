@@ -268,6 +268,63 @@ class InteractiveQueryMap:
         """
         return self.drawn_polygon
     
+    def load_polygon_from_geojson(self, geojson_file):
+        """
+        Load polygon coordinates from a GeoJSON file exported from the map.
+        
+        Args:
+            geojson_file: Path to GeoJSON file (string or file object)
+        
+        Returns:
+            list: Polygon coordinates [[lon, lat], ...]
+        
+        Raises:
+            ValueError: If file format is invalid or polygon exceeds 100 vertices
+        """
+        import json
+        
+        # Read the GeoJSON file
+        if isinstance(geojson_file, str):
+            with open(geojson_file, 'r') as f:
+                geojson_data = json.load(f)
+        else:
+            geojson_data = json.load(geojson_file)
+        
+        # Extract coordinates from GeoJSON
+        # Support both FeatureCollection and single Feature
+        if geojson_data.get('type') == 'FeatureCollection':
+            features = geojson_data.get('features', [])
+            if not features:
+                raise ValueError("No features found in GeoJSON")
+            # Use the last drawn feature (most recent)
+            feature = features[-1]
+        elif geojson_data.get('type') == 'Feature':
+            feature = geojson_data
+        else:
+            raise ValueError("Invalid GeoJSON format")
+        
+        # Extract coordinates based on geometry type
+        geometry = feature.get('geometry', {})
+        geom_type = geometry.get('type')
+        coords = geometry.get('coordinates', [])
+        
+        if geom_type == 'Polygon':
+            # Polygon coordinates are [[[lon, lat], ...]]
+            polygon_coords = coords[0] if coords else []
+        elif geom_type == 'Rectangle' or geom_type == 'LineString':
+            # Rectangle or LineString
+            polygon_coords = coords
+        else:
+            raise ValueError(f"Unsupported geometry type: {geom_type}")
+        
+        # Validate and set the polygon
+        if len(polygon_coords) > 100:
+            raise ValueError(f"Polygon has {len(polygon_coords)} vertices, max 100 allowed")
+        
+        self.drawn_polygon = polygon_coords
+        print(f"✅ Loaded polygon with {len(polygon_coords)} vertices from {geojson_file}")
+        return polygon_coords
+    
     def set_polygon(self, coordinates):
         """
         Manually set polygon coordinates.
