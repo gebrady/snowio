@@ -178,6 +178,8 @@ class InteractiveQueryMap:
         )
         
         # Dataset selection
+        # Note: Landsat 8 and 9 share the same dataset identifiers in Collection 2
+        # The API automatically includes both satellites when querying these datasets
         self.dataset_widget = widgets.Dropdown(
             options=[
                 ('Landsat 8 Collection 2 Level 1', 'landsat_ot_c2_l1'),
@@ -301,7 +303,9 @@ class InteractiveQueryMap:
             print("🔍 Searching for Landsat scenes...")
             print(f"   Date range: {self.start_date_widget.value} to {self.end_date_widget.value}")
             print(f"   Max cloud cover: {self.cloud_cover_widget.value}%")
-            print(f"   Dataset: {self.dataset_widget.options[self.dataset_widget.index][0]}")
+            # Get the label (text) corresponding to the current value
+            dataset_label = next(label for label, val in self.dataset_widget.options if val == self.dataset_widget.value)
+            print(f"   Dataset: {dataset_label}")
             print()
             
             try:
